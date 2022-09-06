@@ -187,6 +187,13 @@ fn record_field_access<'a>() -> impl Parser<'a, &'a str, EExpr<'a>> {
     )
 }
 
+fn record_field_update_anonymous<'a>() -> impl Parser<'a, &'a str, EExpr<'a>> {
+    skip_first!(
+        word1(b'&', EExpr::Access),
+        specialize(|_, pos| EExpr::Access(pos), lowercase_ident())
+    )
+}
+
 /// In some contexts we want to parse the `_` as an expression, so it can then be turned into a
 /// pattern later
 fn parse_loc_term_or_underscore_or_conditional<'a>(

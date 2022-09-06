@@ -850,6 +850,26 @@ fn update_record() {
 }
 
 #[test]
+#[cfg(any(feature = "gen-llvm", feature = "gen-wasm"))]
+fn update_record_anonymous() {
+    assert_evals_to!(
+        indoc!(
+            r#"
+                rec = { foo: 42, bar: 2.46 }
+
+                { rec & foo: 24 }
+
+                &foo rec 24
+
+                rec
+                "#
+        ),
+        (2.46, 24),
+        (f64, i64)
+    );
+}
+
+#[test]
 #[cfg(any(feature = "gen-llvm", feature = "gen-dev", feature = "gen-wasm"))]
 fn update_single_element_record() {
     assert_evals_to!(

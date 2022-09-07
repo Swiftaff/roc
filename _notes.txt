@@ -1,0 +1,25 @@
+1. errors trying to run compiler on windows
+
+H:\Development\roc\target\debug>roc ../../testy.roc
+🔨 Rebuilding host...
+warning: ignoring debug info with an invalid version (0) in app
+thread '<unnamed>' panicked at 'Failed to rebuild host.c - stderr of the `clang` command was:
+clang: error: unsupported option '-fPIC' for target 'x86_64-pc-windows-msvc'
+', crates\compiler\build\src\link.rs:1314:27
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Any { .. }', crates\cli\src\build.rs:324:46
+
+2. errors after commenting out -fPIC flags
+
+H:\Development\roc\target\debug>roc ../../testy.roc
+🔨 Rebuilding host...
+warning: ignoring debug info with an invalid version (0) in app
+thread '<unnamed>' panicked at 'Failed to rebuild c_host.o - stderr of the `ld` command was:
+C:\msys64\mingw64\bin\ld.exe: ../..\examples/interactive/cli-platform\host.obj: unable to fill in DataDictionary[9] because __tls_used is missing
+', crates\compiler\build\src\link.rs:1311:27
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Any { .. }', crates\cli\src\build.rs:324:46
+
+?? windows panics and thread related?
+https://github.com/rust-lang/rust/issues/28129
+https://github.com/rust-lang/rust/issues/28111

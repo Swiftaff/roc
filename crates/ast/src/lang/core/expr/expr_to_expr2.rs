@@ -307,6 +307,18 @@ pub fn expr_to_expr2<'a>(
             Output::default(),
         ),
 
+        UpdaterFunction(field) => (
+            Expr2::Updater {
+                function_var: env.var_store.fresh(),
+                record_var: env.var_store.fresh(),
+                ext_var: env.var_store.fresh(),
+                closure_var: env.var_store.fresh(),
+                field_var: env.var_store.fresh(),
+                field: PoolStr::new(field, env.pool),
+            },
+            Output::default(),
+        ),
+
         If(branches, final_else) => {
             let mut new_branches = Vec::with_capacity(branches.len());
             let mut output = Output::default();

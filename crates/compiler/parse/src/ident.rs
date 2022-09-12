@@ -222,6 +222,7 @@ pub enum BadIdent {
     Underscore(Position),
     QualifiedTag(Position),
     WeirdAccessor(Position),
+    WeirdUpdater(Position),
     WeirdDotAccess(Position),
     WeirdDotQualified(Position),
     StrayDot(Position),
@@ -304,7 +305,7 @@ fn chomp_updater(buffer: &[u8], pos: Position) -> Result<&str, BadIdent> {
             let chomped = name.len();
 
             if let Ok(('&', _)) = char::from_utf8_slice_start(&buffer[chomped..]) {
-                Err(BadIdent::WeirdAccessor(pos))
+                Err(BadIdent::WeirdUpdater(pos))
             } else {
                 Ok(name)
             }

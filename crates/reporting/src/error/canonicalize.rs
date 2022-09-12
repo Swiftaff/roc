@@ -1085,6 +1085,19 @@ fn to_bad_ident_expr_report<'b>(
             ]),
         ]),
 
+        WeirdUpdater(_pos) => alloc.stack([
+            alloc.reflow("I am very confused by this record field updater"),
+            alloc.region(lines.convert_region(surroundings)),
+            alloc.concat([
+                alloc.reflow("It looks like a record field updater. I parse"),
+                alloc.parser_suggestion("&foo"),
+                alloc.reflow(". Maybe use an anonymous function like "),
+                alloc.parser_suggestion("(\\r, v -> { r & foo: v)"),
+                alloc.reflow(" instead"),
+                alloc.reflow("?"),
+            ]),
+        ]),
+
         StrayAmpersand(_pos) => alloc.stack([
             alloc.reflow("I am very confused by this field updater"),
             alloc.region(lines.convert_region(surroundings)),
@@ -1266,6 +1279,19 @@ fn to_bad_ident_pattern_report<'b>(
                 alloc.parser_suggestion("(.client).name"),
                 alloc.reflow(". Maybe use an anonymous function like "),
                 alloc.parser_suggestion("(\\r -> r.client.name)"),
+                alloc.reflow(" instead"),
+                alloc.reflow("?"),
+            ]),
+        ]),
+
+        WeirdUpdater(_pos) => alloc.stack([
+            alloc.reflow("I am very confused by this record field updater"),
+            alloc.region(lines.convert_region(surroundings)),
+            alloc.concat([
+                alloc.reflow("It looks like a record field updater. I parse"),
+                alloc.parser_suggestion("&foo"),
+                alloc.reflow(". Maybe use an anonymous function like "),
+                alloc.parser_suggestion("(\\r, v -> { r & foo: v)"),
                 alloc.reflow(" instead"),
                 alloc.reflow("?"),
             ]),

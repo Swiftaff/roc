@@ -23,3 +23,17 @@ thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Any { ..
 ?? windows panics and thread related?
 https://github.com/rust-lang/rust/issues/28129
 https://github.com/rust-lang/rust/issues/28111
+
+3. 12 Sep 2022 - merge latest main, fixes lots of errors
+H:\Development\roc\target\debug>roc ../../testy.roc = at least getting compiler errors now!
+
+12│  rec3 = &foo rec2 12
+            ^
+I was expecting to see an expression like 42 or "hello".
+
+4. Adding WeirdAccessor - now where do we define the number of arguments??
+This function expects 1 argument, but it got 2 instead:
+12│  rec3 = &foo rec2 12
+            ^^^^
+Are there any missing commas? Or missing parentheses?
+

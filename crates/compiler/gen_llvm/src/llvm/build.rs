@@ -3718,6 +3718,37 @@ fn expose_function_to_host_help_c_abi_v2<'a, 'ctx, 'env>(
         Linkage::External,
     );
 
+    // a temporary solution to be able to pass RocStr by-value from a host language.
+    {
+        let extra = match cc_return {
+            CCReturn::Return => 0,
+            CCReturn::ByPointer => 1,
+            CCReturn::Void => 0,
+        };
+
+        for (i, layout) in arguments.iter().enumerate() {
+            if let Layout::Builtin(Builtin::Str) = layout {
+                // Indicate to LLVM that this argument is semantically passed by-value
+                // even though technically (because of its size) it is passed by-reference
+                let byval_attribute_id = Attribute::get_named_enum_kind_id("byval");
+                debug_assert!(byval_attribute_id > 0);
+
+                // if ret_typ is a pointer type. We need the base type here.
+                let ret_typ = c_function.get_type().get_param_types()[i + extra];
+                let ret_base_typ = if ret_typ.is_pointer_type() {
+                    ret_typ.into_pointer_type().get_element_type()
+                } else {
+                    ret_typ.as_any_type_enum()
+                };
+
+                let byval_attribute = env
+                    .context
+                    .create_type_attribute(byval_attribute_id, ret_base_typ);
+                c_function.add_attribute(AttributeLoc::Param((i + extra) as u32), byval_attribute);
+            }
+        }
+    }
+
     let subprogram = env.new_subprogram(c_function_name);
     c_function.set_subprogram(subprogram);
 
@@ -3933,7 +3964,7 @@ fn expose_function_to_host_help_c_abi<'a, 'ctx, 'env>(
 }
 
 pub fn get_sjlj_buffer<'a, 'ctx, 'env>(env: &Env<'a, 'ctx, 'env>) -> PointerValue<'ctx> {
-    // The size of jump_buf is platform-dependent.
+    // The size of jump_buf is target-dependent.
     //   - AArch64 needs 3 machine-sized words
     //   - LLVM says the following about the SJLJ intrinsic:
     //
@@ -5864,7 +5895,7 @@ fn run_low_level<'a, 'ctx, 'env>(
                         bitcode::STR_GET_SCALAR_UNSAFE,
                     );
 
-                    // on 32-bit platforms, zig bitpacks the struct
+                    // on 32-bit targets, zig bitpacks the struct
                     match env.target_info.ptr_width() {
                         PtrWidth::Bytes8 => result,
                         PtrWidth::Bytes4 => {
@@ -6576,7 +6607,7 @@ fn to_cc_type_builtin<'a, 'ctx, 'env>(
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 enum RocReturn {
     /// Return as normal
     Return,
@@ -6920,7 +6951,16 @@ fn build_foreign_symbol<'a, 'ctx, 'env>(
                         builder.build_return(Some(&return_value));
                     }
                     RocReturn::ByPointer => {
-                        debug_assert!(matches!(cc_return, CCReturn::ByPointer));
+                        match cc_return {
+                            CCReturn::Return => {
+                                let result = call.try_as_basic_value().left().unwrap();
+                                env.builder.build_store(return_pointer, result);
+                            }
+
+                            CCReturn::ByPointer | CCReturn::Void => {
+                                // the return value (if any) is already written to the return pointer
+                            }
+                        }
 
                         builder.build_return(None);
                     }

@@ -1698,7 +1698,7 @@ fn format_category<'b>(
             ]),
             alloc.text(" is a:"),
         ),
-        Updater(field) => (
+        Updater(_, field) => (
             alloc.concat([
                 alloc.text(format!("{}his ", t)),
                 alloc.record_field(field.to_owned()),

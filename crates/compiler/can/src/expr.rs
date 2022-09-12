@@ -269,7 +269,7 @@ impl Expr {
             Self::EmptyRecord => Category::Record,
             Self::Access { field, .. } => Category::Access(field.clone()),
             Self::Accessor(data) => Category::Accessor(data.field.clone()),
-            Self::Updater(data) => Category::Updater(data.field.clone()),
+            Self::Updater(data) => Category::Updater(data.field.clone(), data.field.clone()),
             Self::Update { .. } => Category::Record,
             Self::Tag {
                 name, arguments, ..
@@ -398,7 +398,7 @@ impl AccessorData {
 }
 
 /// A record updater like `&foo`, which is equivalent to `\r, v -> r`
-/// Accessors are desugared to closures; they need to have a name
+/// Updaters are desugared to closures; they need to have a name
 /// so the closure can have a correct lambda set.
 ///
 /// We distinguish them from closures so we can have better error messages

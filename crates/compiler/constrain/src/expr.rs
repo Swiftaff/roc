@@ -1036,9 +1036,9 @@ pub fn constrain_expr(
             let closure_type = Type::Variable(*closure_var);
 
             let function_type = Type::Function(
-                vec![record_type],
+                vec![record_type.clone(), field_type],
                 Box::new(closure_type),
-                Box::new(field_type),
+                Box::new(record_type),
             );
 
             let cons = [

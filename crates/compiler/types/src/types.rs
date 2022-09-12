@@ -2015,7 +2015,7 @@ pub enum Category {
     // records
     Record,
     Accessor(Lowercase),
-    Updater(Lowercase),
+    Updater(Lowercase, Lowercase),
     Access(Lowercase),
     DefaultValue(Lowercase), // for setting optional fields
 

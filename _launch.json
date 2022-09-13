@@ -1,0 +1,15 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "cppvsdbg",
+      "request": "launch",
+      "name": "Debug roc.exe",
+      "program": "${workspaceFolder}/target/debug/roc.exe",
+      "args": [
+        "${workspaceFolder}/testy.roc"
+      ],
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

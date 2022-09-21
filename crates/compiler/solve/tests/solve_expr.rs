@@ -4275,7 +4275,7 @@ mod solve_expr {
                             x
                 "#
             ),
-            "[Empty, Foo Bar I64]",
+            "[Empty, Foo [Bar] I64]",
         );
     }
 
@@ -7773,6 +7773,54 @@ mod solve_expr {
                 "#
             ),
             "{}",
+        );
+    }
+
+    #[test]
+    fn match_on_result_with_uninhabited_error_branch() {
+        infer_eq_without_problem(
+            indoc!(
+                r#"
+                x : Result Str []
+                x = Ok "abc"
+
+                when x is
+                    Ok s -> s
+                "#
+            ),
+            "Str",
+        );
+    }
+
+    #[test]
+    fn match_on_result_with_uninhabited_error_destructuring() {
+        infer_eq_without_problem(
+            indoc!(
+                r#"
+                x : Result Str []
+                x = Ok "abc"
+
+                Ok str = x
+
+                str
+                "#
+            ),
+            "Str",
+        );
+    }
+
+    #[test]
+    fn match_on_result_with_uninhabited_error_destructuring_in_lambda_syntax() {
+        infer_eq_without_problem(
+            indoc!(
+                r#"
+                x : Result Str [] -> Str
+                x = \Ok s -> s
+
+                x
+                "#
+            ),
+            "Result Str [] -> Str",
         );
     }
 }

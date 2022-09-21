@@ -1927,3 +1927,76 @@ fn issue_3669() {
         "#
     )
 }
+
+#[mono_test]
+fn num_width_gt_u8_layout_as_float() {
+    indoc!(
+        r#"
+        1 / 200
+        "#
+    )
+}
+
+#[mono_test]
+fn match_on_result_with_uninhabited_error_branch() {
+    indoc!(
+        r#"
+        x : Result Str []
+        x = Ok "abc"
+
+        when x is
+            Ok s -> s
+        "#
+    )
+}
+
+#[mono_test]
+fn unreachable_void_constructor() {
+    indoc!(
+        r#"
+        app "test" provides [main] to "./platform"
+
+        x : []
+
+        main = if True then Ok x else Err "abc" 
+        "#
+    )
+}
+
+#[mono_test]
+fn unreachable_branch_is_eliminated_but_produces_lambda_specializations() {
+    indoc!(
+        r#"
+        app "test" provides [main] to "./platform"
+
+        provideThunk = \x ->
+            when x is
+                Ok _ ->
+                    t1 = \{} -> "t1"
+                    t1
+                # During specialization of `main` we specialize this function,
+                # which leads to elimination of this branch, because it is unreachable
+                # (it can only match the uninhabited type `Err []`).
+                #
+                # However, naive elimination of this branch would mean we don't traverse
+                # the branch body. If we don't do so, we will fail to see and specialize `t2`,
+                # which is problematic - while `t2` won't ever be reached in this specialization,
+                # it is still part of the lambda set, and `thunk {}` (in main) will match over
+                # it before calling.
+                #
+                # So, this test verifies that we eliminate this branch, but still specialize
+                # everything we need.
+                Err _ ->
+                    t2 = \{} -> "t2"
+                    t2
+
+        main =
+            x : Result Str []
+            x = Ok "abc"
+
+            thunk = provideThunk x
+
+            thunk {}
+        "#
+    )
+}

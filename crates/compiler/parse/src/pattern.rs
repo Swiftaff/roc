@@ -311,6 +311,14 @@ fn loc_ident_pattern_help<'a>(
                 },
                 state,
             )),
+            Ident::UpdaterFunction(string) => Ok((
+                MadeProgress,
+                Loc {
+                    region: loc_ident.region,
+                    value: Pattern::Malformed(string),
+                },
+                state,
+            )),
             Ident::Malformed(malformed, problem) => {
                 debug_assert!(!malformed.is_empty());
 

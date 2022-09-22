@@ -1564,6 +1564,20 @@ mod solve_expr {
     }
 
     #[test]
+    fn updater_function() {
+        infer_eq(
+            indoc!(
+                r#"
+                user = { year: "foo", name: "Sam" }
+
+                user2 = &year user "foo"
+            "#
+            ),
+            "{ name : Str, year : Str }",
+        );
+    }
+
+    #[test]
     fn bare_tag() {
         infer_eq(
             indoc!(

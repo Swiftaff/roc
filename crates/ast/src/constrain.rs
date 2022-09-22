@@ -419,6 +419,72 @@ pub fn constrain_expr<'a>(
 
             exists(arena, flex_vars, And(and_constraints))
         }
+        Expr2::Updater {
+            function_var,
+            closure_var,
+            field,
+            record_var,
+            ext_var,
+            field_var,
+        } => {
+            let ext_var = *ext_var;
+            let ext_type = Type2::Variable(ext_var);
+
+            let field_var = *field_var;
+            let field_type = Type2::Variable(field_var);
+
+            let record_field =
+                types::RecordField::Demanded(env.pool.add(field_type.shallow_clone()));
+
+            let record_type = Type2::Record(
+                PoolVec::new(vec![(*field, record_field)].into_iter(), env.pool),
+                env.pool.add(ext_type),
+            );
+
+            let category = Category::Accessor(field.as_str(env.pool).into());
+
+            let record_expected = Expected::NoExpectation(record_type.shallow_clone());
+            let record_con = Eq(
+                Type2::Variable(*record_var),
+                record_expected,
+                category.clone(),
+                region,
+            );
+
+            let function_type = Type2::Function(
+                PoolVec::new(vec![record_type].into_iter(), env.pool),
+                env.pool.add(Type2::Variable(*closure_var)),
+                env.pool.add(field_type),
+            );
+
+            let mut flex_vars = BumpVec::with_capacity_in(5, arena);
+
+            flex_vars.push(*record_var);
+            flex_vars.push(*function_var);
+            flex_vars.push(*closure_var);
+            flex_vars.push(field_var);
+            flex_vars.push(ext_var);
+
+            let mut and_constraints = BumpVec::with_capacity_in(3, arena);
+
+            and_constraints.push(Eq(
+                function_type.shallow_clone(),
+                expected,
+                category.clone(),
+                region,
+            ));
+
+            and_constraints.push(Eq(
+                function_type,
+                Expected::NoExpectation(Type2::Variable(*function_var)),
+                category,
+                region,
+            ));
+
+            and_constraints.push(record_con);
+
+            exists(arena, flex_vars, And(and_constraints))
+        }
         Expr2::Access {
             expr: expr_id,
             field,

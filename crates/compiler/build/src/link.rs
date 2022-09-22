@@ -137,8 +137,8 @@ pub fn build_zig_host_native(
             &builtins_obj,
         ]);
     } else {
-        command.args(&["build-obj"]); //, "-fPIC"]);
-                                      //command.args(&["build-obj", "-fPIC"]);
+        //command.args(&["build-obj"]); //, "-fPIC"]);
+        command.args(&["build-obj", "-fPIC"]);
     }
 
     command.args(&[
@@ -206,8 +206,8 @@ pub fn build_zig_host_native(
             &bitcode::get_builtins_host_obj_path(),
         ]);
     } else {
-        command.args(&["build-obj"]); //, "-fPIC"]);
-                                      //command.args(&["build-obj", "-fPIC"]);
+        //command.args(&["build-obj"]); //, "-fPIC"]);
+        command.args(&["build-obj", "-fPIC"]);
     }
 
     command.args(&[
@@ -305,8 +305,8 @@ pub fn build_zig_host_native(
             &bitcode::get_builtins_host_obj_path(),
         ]);
     } else {
-        command.args(&["build-obj"]); //, "-fPIC"]);
-                                      //command.args(&["build-obj", "-fPIC"]);
+        //command.args(&["build-obj"]); //, "-fPIC"]);
+        command.args(&["build-obj", "-fPIC"]);
     }
     command.args(&[
         zig_host_src,
@@ -425,8 +425,8 @@ pub fn build_c_host_native(
             "-lutil",
         ]);
     } else {
-        //command.args(&["-fPIC", "-c"]);
-        command.args(&["-c"]);
+        command.args(&["-fPIC", "-c"]);
+        //command.args(&["-c"]);
     }
     if matches!(opt_level, OptLevel::Optimize) {
         command.arg("-O3");

@@ -45,6 +45,8 @@ pub enum Ident<'a> {
     },
     /// .foo { foo: 42 }
     AccessorFunction(&'a str),
+    /// &foo { foo: 42 } 24
+    UpdaterFunction(&'a str),
     /// .Foo or foo. or something like foo.Bar
     Malformed(&'a str, BadIdent),
 }
@@ -70,6 +72,7 @@ impl<'a> Ident<'a> {
                 len - 1
             }
             AccessorFunction(string) => string.len(),
+            UpdaterFunction(string) => string.len(),
             Malformed(string, _) => string.len(),
         }
     }
@@ -222,6 +225,7 @@ pub enum BadIdent {
     WeirdDotAccess(Position),
     WeirdDotQualified(Position),
     StrayDot(Position),
+    StrayAmpersand(Position),
     BadOpaqueRef(Position),
 }
 
@@ -290,6 +294,28 @@ fn chomp_accessor(buffer: &[u8], pos: Position) -> Result<&str, BadIdent> {
     }
 }
 
+/// a `&foo` updater function
+fn chomp_updater(buffer: &[u8], pos: Position) -> Result<&str, BadIdent> {
+    // assumes the leading `&` has been chomped already
+    use encode_unicode::CharExt;
+
+    match chomp_lowercase_part(buffer) {
+        Ok(name) => {
+            let chomped = name.len();
+
+            if let Ok(('&', _)) = char::from_utf8_slice_start(&buffer[chomped..]) {
+                Err(BadIdent::WeirdAccessor(pos))
+            } else {
+                Ok(name)
+            }
+        }
+        Err(_) => {
+            // we've already made progress with the initial `&`
+            Err(BadIdent::StrayAmpersand(pos.bump_column(1)))
+        }
+    }
+}
+
 /// a `@Token` opaque
 fn chomp_opaque_ref(buffer: &[u8], pos: Position) -> Result<&str, BadIdent> {
     // assumes the leading `@` has NOT been chomped already
@@ -330,6 +356,14 @@ fn chomp_identifier_chain<'a>(
                     let bytes_parsed = 1 + accessor.len();
 
                     return Ok((bytes_parsed as u32, Ident::AccessorFunction(accessor)));
+                }
+                Err(fail) => return Err((1, fail)),
+            },
+            '&' => match chomp_updater(&buffer[1..], pos) {
+                Ok(updater) => {
+                    let bytes_parsed = 1 + updater.len();
+
+                    return Ok((bytes_parsed as u32, Ident::UpdaterFunction(updater)));
                 }
                 Err(fail) => return Err((1, fail)),
             },

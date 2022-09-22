@@ -47,6 +47,7 @@ mod test_peg_grammar {
               / module_var()
               / tag()
               / accessor_function()
+              / updater_function()
               / defs()
               / annotation()
               / [T::LowercaseIdent]
@@ -204,6 +205,10 @@ mod test_peg_grammar {
             rule accessor_function() =
               [T::SpaceDot] ident()
               / [T::Dot] ident()
+
+              rule updater_function() =
+              [T::Ampersand] ident()
+              / [T::Ampersand] ident()
 
             pub rule header() =
               __ almost_header() header_end()

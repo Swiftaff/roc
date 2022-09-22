@@ -140,6 +140,15 @@ pub enum Expr2 {
         ext_var: Variable,      // 4B
         field_var: Variable,    // 4B
     },
+    /// field updater as a function, e.g. (&foo) expr
+    Updater {
+        function_var: Variable, // 4B
+        closure_var: Variable,  // 4B
+        field: PoolStr,         // 4B
+        record_var: Variable,   // 4B
+        ext_var: Variable,      // 4B
+        field_var: Variable,    // 4B
+    },
     Update {
         symbol: Symbol,                // 8B
         updates: PoolVec<RecordField>, // 8B

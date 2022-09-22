@@ -2405,7 +2405,11 @@ fn update<'a>(
                 Some(ref platform_data) => module_id == platform_data.module_id,
             };
 
-            if is_host_exposed {
+            let add_to_host_exposed = is_host_exposed &&
+                // During testing, we don't need to expose anything to the host.
+                !matches!(state.exec_mode, ExecutionMode::Test);
+
+            if add_to_host_exposed {
                 state.exposed_to_host.values.extend(
                     solved_module
                         .exposed_vars_by_symbol
@@ -3907,14 +3911,21 @@ fn send_header_two<'a>(
         // Also build a list of imported_values_to_expose (like `bar` above.)
         for (qualified_module_name, exposed_idents, region) in imported.into_iter() {
             let cloned_module_name = qualified_module_name.module.clone();
-            let pq_module_name = match qualified_module_name.opt_package {
-                None => match opt_shorthand {
-                    Some(shorthand) => {
-                        PQModuleName::Qualified(shorthand, qualified_module_name.module)
-                    }
-                    None => PQModuleName::Unqualified(qualified_module_name.module),
-                },
-                Some(package) => PQModuleName::Qualified(package, cloned_module_name),
+            let pq_module_name = if qualified_module_name.is_builtin() {
+                // If this is a builtin, it must be unqualified, and we should *never* prefix it
+                // with the package shorthand! The user intended to import the module as-is here.
+                debug_assert!(qualified_module_name.opt_package.is_none());
+                PQModuleName::Unqualified(qualified_module_name.module)
+            } else {
+                match qualified_module_name.opt_package {
+                    None => match opt_shorthand {
+                        Some(shorthand) => {
+                            PQModuleName::Qualified(shorthand, qualified_module_name.module)
+                        }
+                        None => PQModuleName::Unqualified(qualified_module_name.module),
+                    },
+                    Some(package) => PQModuleName::Qualified(package, cloned_module_name),
+                }
             };
 
             let module_id = module_ids.get_or_insert(&pq_module_name);

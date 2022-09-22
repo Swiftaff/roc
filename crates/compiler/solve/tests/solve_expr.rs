@@ -1385,7 +1385,7 @@ mod solve_expr {
         infer_eq(
             indoc!(
                 r#"
-                    if True then
+                    if Bool.true then
                         42
                     else
                         24
@@ -3826,7 +3826,7 @@ mod solve_expr {
                     when x is
                         2 | 3 -> 0
                         a if a < 20 ->  1
-                        3 | 4 if False -> 2
+                        3 | 4 if Bool.false -> 2
                         _ -> 3
                 "#
             ),
@@ -4068,7 +4068,7 @@ mod solve_expr {
                 r#"
                 \rec ->
                     { x, y } : { x : I64, y ? Bool }*
-                    { x, y ? False } = rec
+                    { x, y ? Bool.false } = rec
 
                     { x, y }
                 "#
@@ -4289,7 +4289,7 @@ mod solve_expr {
                             x
                 "#
             ),
-            "[Empty, Foo Bar I64]",
+            "[Empty, Foo [Bar] I64]",
         );
     }
 
@@ -5029,7 +5029,7 @@ mod solve_expr {
         infer_eq_without_problem(
             indoc!(
                 r#"
-                badComics: Bool -> [CowTools _, Thagomizer _]
+                badComics: [True, False] -> [CowTools _, Thagomizer _]
                 badComics = \c ->
                     when c is
                         True -> CowTools "The Far Side"
@@ -5037,7 +5037,7 @@ mod solve_expr {
                 badComics
                 "#
             ),
-            "Bool -> [CowTools Str, Thagomizer Str]",
+            "[False, True] -> [CowTools Str, Thagomizer Str]",
         )
     }
 
@@ -5943,7 +5943,7 @@ mod solve_expr {
         infer_eq_without_problem(
             indoc!(
                 r#"
-                if True then List.first [] else Str.toI64 ""
+                if Bool.true then List.first [] else Str.toI64 ""
                 "#
             ),
             "Result I64 [InvalidNumStr, ListWasEmpty]*",
@@ -6234,7 +6234,7 @@ mod solve_expr {
                 r#"
                 app "test" provides [foo] to "./platform"
 
-                foo : Bool -> Str
+                foo : [True, False] -> Str
                 foo = \ob ->
                 #      ^^
                     when ob is
@@ -6246,8 +6246,8 @@ mod solve_expr {
                 "#
             ),
             @r###"
-        ob : Bool
-        ob : Bool
+        ob : [False, True]
+        ob : [False, True]
         True : [False, True]
         False : [False, True]
         "###
@@ -6926,7 +6926,7 @@ mod solve_expr {
             indoc!(
                 r#"
                 f : _ -> _
-                f = \_ -> if False then "" else f ""
+                f = \_ -> if Bool.false then "" else f ""
 
                 f
                 "#
@@ -6942,7 +6942,7 @@ mod solve_expr {
                 r#"
                 f : _ -> Str
                 f = \s -> g s
-                g = \s -> if True then s else f s
+                g = \s -> if Bool.true then s else f s
 
                 g
                 "#
@@ -7444,7 +7444,7 @@ mod solve_expr {
                 #   ^^
                         (f A (@C {}) (@D {}))
                 #        ^
-                    if True
+                    if Bool.true
                         then it (@E {})
                         #    ^^
                         else it (@F {})
@@ -7755,8 +7755,8 @@ mod solve_expr {
         infer_queries!(
             indoc!(
                 r#"
-                x = True
-                y = False
+                x = Bool.true
+                y = Bool.false
 
                 a = "foo"
                 b = "bar"
@@ -7770,8 +7770,8 @@ mod solve_expr {
                 "#
             ),
         @r###"
-        foo : {} -[[foo(5) [True]* [False]* Str Str]]-> Str
-        bar : {} -[[bar(6) [True]* [False]* Str Str]]-> Str
+        foo : {} -[[foo(5) Bool Bool Str Str]]-> Str
+        bar : {} -[[bar(6) Bool Bool Str Str]]-> Str
         "###
         );
     }
@@ -7787,6 +7787,54 @@ mod solve_expr {
                 "#
             ),
             "{}",
+        );
+    }
+
+    #[test]
+    fn match_on_result_with_uninhabited_error_branch() {
+        infer_eq_without_problem(
+            indoc!(
+                r#"
+                x : Result Str []
+                x = Ok "abc"
+
+                when x is
+                    Ok s -> s
+                "#
+            ),
+            "Str",
+        );
+    }
+
+    #[test]
+    fn match_on_result_with_uninhabited_error_destructuring() {
+        infer_eq_without_problem(
+            indoc!(
+                r#"
+                x : Result Str []
+                x = Ok "abc"
+
+                Ok str = x
+
+                str
+                "#
+            ),
+            "Str",
+        );
+    }
+
+    #[test]
+    fn match_on_result_with_uninhabited_error_destructuring_in_lambda_syntax() {
+        infer_eq_without_problem(
+            indoc!(
+                r#"
+                x : Result Str [] -> Str
+                x = \Ok s -> s
+
+                x
+                "#
+            ),
+            "Result Str [] -> Str",
         );
     }
 }

@@ -2432,6 +2432,15 @@ pub fn store_roc_value<'a, 'ctx, 'env>(
                 .unwrap();
         }
     } else {
+        let destination_type = destination
+            .get_type()
+            .get_element_type()
+            .try_into()
+            .unwrap();
+
+        let value =
+            cast_if_necessary_for_opaque_recursive_pointers(env.builder, value, destination_type);
+
         env.builder.build_store(destination, value);
     }
 }
@@ -2947,6 +2956,29 @@ pub fn load_symbol_and_lambda_set<'a, 'ctx, 'b>(
         Some((Layout::LambdaSet(lambda_set), ptr)) => (*ptr, *lambda_set),
         Some((other, ptr)) => panic!("Not a lambda set: {:?}, {:?}", other, ptr),
         None => panic!("There was no entry for {:?} in scope {:?}", symbol, scope),
+    }
+}
+
+/// Cast a value to another value of the same size, but only if their types are not equivalent.
+/// This is needed to allow us to interoperate between recursive pointers in unions that are
+/// opaque, and well-typed.
+///
+/// This will no longer be necessary and should be removed after we employ opaque pointers from
+/// LLVM.
+pub fn cast_if_necessary_for_opaque_recursive_pointers<'ctx>(
+    builder: &Builder<'ctx>,
+    from_value: BasicValueEnum<'ctx>,
+    to_type: BasicTypeEnum<'ctx>,
+) -> BasicValueEnum<'ctx> {
+    if from_value.get_type() != to_type {
+        complex_bitcast(
+            builder,
+            from_value,
+            to_type,
+            "bitcast_for_opaque_recursive_pointer",
+        )
+    } else {
+        from_value
     }
 }
 
@@ -3964,7 +3996,7 @@ fn expose_function_to_host_help_c_abi<'a, 'ctx, 'env>(
 }
 
 pub fn get_sjlj_buffer<'a, 'ctx, 'env>(env: &Env<'a, 'ctx, 'env>) -> PointerValue<'ctx> {
-    // The size of jump_buf is platform-dependent.
+    // The size of jump_buf is target-dependent.
     //   - AArch64 needs 3 machine-sized words
     //   - LLVM says the following about the SJLJ intrinsic:
     //
@@ -5895,7 +5927,7 @@ fn run_low_level<'a, 'ctx, 'env>(
                         bitcode::STR_GET_SCALAR_UNSAFE,
                     );
 
-                    // on 32-bit platforms, zig bitpacks the struct
+                    // on 32-bit targets, zig bitpacks the struct
                     match env.target_info.ptr_width() {
                         PtrWidth::Bytes8 => result,
                         PtrWidth::Bytes4 => {
@@ -6607,7 +6639,7 @@ fn to_cc_type_builtin<'a, 'ctx, 'env>(
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy)]
 enum RocReturn {
     /// Return as normal
     Return,
@@ -6951,7 +6983,16 @@ fn build_foreign_symbol<'a, 'ctx, 'env>(
                         builder.build_return(Some(&return_value));
                     }
                     RocReturn::ByPointer => {
-                        debug_assert!(matches!(cc_return, CCReturn::ByPointer));
+                        match cc_return {
+                            CCReturn::Return => {
+                                let result = call.try_as_basic_value().left().unwrap();
+                                env.builder.build_store(return_pointer, result);
+                            }
+
+                            CCReturn::ByPointer | CCReturn::Void => {
+                                // the return value (if any) is already written to the return pointer
+                            }
+                        }
 
                         builder.build_return(None);
                     }

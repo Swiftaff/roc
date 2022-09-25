@@ -174,7 +174,8 @@ pub enum Expr {
     },
     /// field accessor as a function, e.g. (.foo) expr
     Accessor(AccessorData),
-
+    /// field updater as a function, e.g. (&foo) expr
+    Updater(UpdaterData),
     Update {
         record_var: Variable,
         ext_var: Variable,
@@ -268,6 +269,7 @@ impl Expr {
             Self::EmptyRecord => Category::Record,
             Self::Access { field, .. } => Category::Access(field.clone()),
             Self::Accessor(data) => Category::Accessor(data.field.clone()),
+            Self::Updater(data) => Category::Updater(data.field.clone()),
             Self::Update { .. } => Category::Record,
             Self::Tag {
                 name, arguments, ..
@@ -366,6 +368,72 @@ impl AccessorData {
         // into
         //
         // (\r -> r.foo)
+        let body = Expr::Access {
+            record_var,
+            ext_var,
+            field_var,
+            loc_expr: Box::new(Loc::at_zero(Expr::Var(record_symbol))),
+            field,
+        };
+
+        let loc_body = Loc::at_zero(body);
+
+        let arguments = vec![(
+            record_var,
+            AnnotatedMark::known_exhaustive(),
+            Loc::at_zero(Pattern::Identifier(record_symbol)),
+        )];
+
+        ClosureData {
+            function_type: function_var,
+            closure_type: closure_var,
+            return_type: field_var,
+            name,
+            captured_symbols: vec![],
+            recursive: Recursive::NotRecursive,
+            arguments,
+            loc_body: Box::new(loc_body),
+        }
+    }
+}
+
+/// A record updater like `&foo`, which is equivalent to `\r, v -> r`
+/// Accessors are desugared to closures; they need to have a name
+/// so the closure can have a correct lambda set.
+///
+/// We distinguish them from closures so we can have better error messages
+/// during constraint generation.
+#[derive(Clone, Debug, PartialEq)]
+pub struct UpdaterData {
+    pub name: Symbol,
+    pub function_var: Variable,
+    pub record_var: Variable,
+    pub closure_var: Variable,
+    pub ext_var: Variable,
+    pub field_var: Variable,
+    pub field: Lowercase,
+}
+
+impl UpdaterData {
+    pub fn to_closure_data(self, record_symbol: Symbol) -> ClosureData {
+        let UpdaterData {
+            name,
+            function_var,
+            record_var,
+            closure_var,
+            ext_var,
+            field_var,
+            field,
+        } = self;
+
+        // IDEA: convert accessor from
+        //
+        // &foo
+        //
+        // into
+        //
+        // (\r, v -> r)
+        // TODO unsure what to change here
         let body = Expr::Access {
             record_var,
             ext_var,
@@ -914,6 +982,18 @@ pub fn canonicalize_expr<'a>(
         }
         ast::Expr::AccessorFunction(field) => (
             Accessor(AccessorData {
+                name: scope.gen_unique_symbol(),
+                function_var: var_store.fresh(),
+                record_var: var_store.fresh(),
+                ext_var: var_store.fresh(),
+                closure_var: var_store.fresh(),
+                field_var: var_store.fresh(),
+                field: (*field).into(),
+            }),
+            Output::default(),
+        ),
+        ast::Expr::UpdaterFunction(field) => (
+            Updater(UpdaterData {
                 name: scope.gen_unique_symbol(),
                 function_var: var_store.fresh(),
                 record_var: var_store.fresh(),
@@ -1646,6 +1726,7 @@ pub fn inline_calls(var_store: &mut VarStore, scope: &mut Scope, expr: Expr) -> 
         | other @ RuntimeError(_)
         | other @ EmptyRecord
         | other @ Accessor { .. }
+        | other @ Updater { .. }
         | other @ Update { .. }
         | other @ Var(_)
         | other @ AbilityMember(..)
@@ -2703,6 +2784,7 @@ fn get_lookup_symbols(expr: &Expr, var_store: &mut VarStore) -> Vec<(Symbol, Var
             | Expr::Str(_)
             | Expr::ZeroArgumentTag { .. }
             | Expr::Accessor(_)
+            | Expr::Updater(_)
             | Expr::SingleQuote(_)
             | Expr::EmptyRecord
             | Expr::TypedHole(_)

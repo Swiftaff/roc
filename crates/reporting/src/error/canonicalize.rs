@@ -1085,6 +1085,37 @@ fn to_bad_ident_expr_report<'b>(
             ]),
         ]),
 
+        WeirdUpdater(_pos) => alloc.stack([
+            alloc.reflow("I am very confused by this field updater"),
+            alloc.region(lines.convert_region(surroundings)),
+            alloc.concat([
+                alloc.reflow("It looks like a field updater on an accessor. I parse"),
+                alloc.parser_suggestion(".client.name"),
+                alloc.reflow(" as "),
+                alloc.parser_suggestion("(.client).name"),
+                alloc.reflow(". Maybe use an anonymous function like "),
+                alloc.parser_suggestion("(\\r, v -> {r & foo = v })"),
+                alloc.reflow(" instead"),
+                alloc.reflow("?"),
+            ]),
+        ]),
+
+
+        StrayAmpersand(_pos) => alloc.stack([
+            alloc.reflow("I am very confused by this field updater"),
+            alloc.region(lines.convert_region(surroundings)),
+            alloc.concat([
+                alloc.reflow("It looks like a field updater on an accessor. I parse"),
+                alloc.parser_suggestion(".client.name"),
+                alloc.reflow(" as "),
+                alloc.parser_suggestion("(.client).name"),
+                alloc.reflow(". Maybe use an anonymous function like "),
+                alloc.parser_suggestion("(\\r, v -> {r & foo = v })"),
+                alloc.reflow(" instead"),
+                alloc.reflow("?"),
+            ]),
+        ]),
+
         WeirdDotQualified(pos) => {
             let region = LineColumnRegion::from_pos(lines.convert_pos(pos));
 
@@ -1226,6 +1257,21 @@ fn to_bad_ident_pattern_report<'b>(
             ])
         }
 
+        StrayAmpersand(_pos) => alloc.stack([
+            alloc.reflow("I am very confused by this field updater"),
+            alloc.region(lines.convert_region(surroundings)),
+            alloc.concat([
+                alloc.reflow("It looks like a field updater on an accessor. I parse"),
+                alloc.parser_suggestion(".client.name"),
+                alloc.reflow(" as "),
+                alloc.parser_suggestion("(.client).name"),
+                alloc.reflow(". Maybe use an anonymous function like "),
+                alloc.parser_suggestion("(\\r, v -> {r & foo = v })"),
+                alloc.reflow(" instead"),
+                alloc.reflow("?"),
+            ]),
+        ]),
+
         WeirdAccessor(_pos) => alloc.stack([
             alloc.reflow("I am very confused by this field access"),
             alloc.region(lines.convert_region(surroundings)),
@@ -1240,6 +1286,22 @@ fn to_bad_ident_pattern_report<'b>(
                 alloc.reflow("?"),
             ]),
         ]),
+
+        WeirdUpdater(_pos) => alloc.stack([
+            alloc.reflow("I am very confused by this field updater"),
+            alloc.region(lines.convert_region(surroundings)),
+            alloc.concat([
+                alloc.reflow("It looks like a field updater on an accessor. I parse"),
+                alloc.parser_suggestion(".client.name"),
+                alloc.reflow(" as "),
+                alloc.parser_suggestion("(.client).name"),
+                alloc.reflow(". Maybe use an anonymous function like "),
+                alloc.parser_suggestion("(\\r, v -> {r & foo = v })"),
+                alloc.reflow(" instead"),
+                alloc.reflow("?"),
+            ]),
+        ]),
+
 
         WeirdDotQualified(pos) => {
             let region = LineColumnRegion::from_pos(lines.convert_pos(pos));

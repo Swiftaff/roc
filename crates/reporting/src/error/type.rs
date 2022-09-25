@@ -1701,6 +1701,14 @@ fn format_category<'b>(
             ]),
             alloc.text(" is a:"),
         ),
+        Updater(field) => (
+            alloc.concat([
+                alloc.text(format!("{}his ", t)),
+                alloc.record_field(field.to_owned()),
+                alloc.text(" value"),
+            ]),
+            alloc.text(" is a:"),
+        ),
         CallResult(
             Some(_),
             CalledVia::BinOp(

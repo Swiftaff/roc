@@ -13,7 +13,7 @@ use roc_can::expected::PExpected;
 use roc_can::expr::Expr::{self, *};
 use roc_can::expr::{
     AccessorData, AnnotatedMark, ClosureData, DeclarationTag, Declarations, DestructureDef, Field,
-    FunctionDef, OpaqueWrapFunctionData, WhenBranch,
+    FunctionDef, OpaqueWrapFunctionData, UpdaterData, WhenBranch,
 };
 use roc_can::pattern::Pattern;
 use roc_can::traverse::symbols_introduced_from_pattern;
@@ -938,6 +938,67 @@ pub fn constrain_expr(
             )
         }
         Accessor(AccessorData {
+            name: closure_name,
+            function_var,
+            field,
+            record_var,
+            closure_var,
+            ext_var,
+            field_var,
+        }) => {
+            let ext_var = *ext_var;
+            let ext_type = Variable(ext_var);
+            let field_var = *field_var;
+            let field_type = Variable(field_var);
+
+            let mut field_types = SendMap::default();
+            let label = field.clone();
+            field_types.insert(label, RecordField::Demanded(field_type.clone()));
+            let record_type = Type::Record(field_types, TypeExtension::from_type(ext_type));
+
+            let category = Category::Accessor(field.clone());
+
+            let record_expected = Expected::NoExpectation(record_type.clone());
+            let record_con =
+                constraints.equal_types_var(*record_var, record_expected, category.clone(), region);
+
+            let lambda_set = Type::ClosureTag {
+                name: *closure_name,
+                captures: vec![],
+                ambient_function: *function_var,
+            };
+
+            let closure_type = Type::Variable(*closure_var);
+
+            let function_type = Type::Function(
+                vec![record_type],
+                Box::new(closure_type),
+                Box::new(field_type),
+            );
+
+            let cons = [
+                constraints.equal_types_var(
+                    *closure_var,
+                    NoExpectation(lambda_set),
+                    category.clone(),
+                    region,
+                ),
+                constraints.equal_types(function_type.clone(), expected, category.clone(), region),
+                constraints.equal_types(
+                    function_type,
+                    NoExpectation(Variable(*function_var)),
+                    category,
+                    region,
+                ),
+                record_con,
+            ];
+
+            constraints.exists_many(
+                [*record_var, *function_var, *closure_var, field_var, ext_var],
+                cons,
+            )
+        }
+        Updater(UpdaterData {
             name: closure_name,
             function_var,
             field,

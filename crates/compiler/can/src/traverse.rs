@@ -9,7 +9,7 @@ use crate::{
     def::{Annotation, Declaration, Def},
     expr::{
         self, AccessorData, AnnotatedMark, ClosureData, Declarations, Expr, Field,
-        OpaqueWrapFunctionData,
+        OpaqueWrapFunctionData, UpdaterData
     },
     pattern::{DestructType, Pattern, RecordDestruct},
 };
@@ -234,6 +234,7 @@ pub fn walk_expr<V: Visitor>(visitor: &mut V, expr: &Expr, var: Variable) {
             ext_var: _,
         } => visitor.visit_expr(&loc_expr.value, loc_expr.region, *field_var),
         Expr::Accessor(AccessorData { .. }) => { /* terminal */ }
+        Expr::Updater(UpdaterData { .. }) => { /* terminal */ }
         Expr::OpaqueWrapFunction(OpaqueWrapFunctionData { .. }) => { /* terminal */ }
         Expr::Update {
             record_var: _,

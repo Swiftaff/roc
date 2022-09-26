@@ -1,6 +1,9 @@
 use crate::{
     def::Def,
-    expr::{AccessorData, ClosureData, Expr, Field, OpaqueWrapFunctionData, UpdaterData, WhenBranchPattern},
+    expr::{
+        AccessorData, ClosureData, Expr, Field, OpaqueWrapFunctionData, UpdaterData,
+        WhenBranchPattern,
+    },
     pattern::{DestructType, Pattern, RecordDestruct},
 };
 use roc_module::{
@@ -501,7 +504,6 @@ fn deep_copy_expr_help<C: CopyEnv>(env: &mut C, copied: &mut Vec<Variable>, expr
             field: field.clone(),
         }),
 
-        
         Updater(UpdaterData {
             name,
             function_var,

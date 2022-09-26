@@ -9,7 +9,7 @@ use crate::{
     def::{Annotation, Declaration, Def},
     expr::{
         self, AccessorData, AnnotatedMark, ClosureData, Declarations, Expr, Field,
-        OpaqueWrapFunctionData, UpdaterData
+        OpaqueWrapFunctionData, UpdaterData,
     },
     pattern::{DestructType, Pattern, RecordDestruct},
 };

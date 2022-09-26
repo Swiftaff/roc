@@ -1057,7 +1057,7 @@ fn fix_values_captured_in_closure_expr(
         | RuntimeError(_)
         | ZeroArgumentTag { .. }
         | Accessor { .. } => {}
-        | Updater { .. } => {}
+        Updater { .. } => {}
 
         List { loc_elems, .. } => {
             for elem in loc_elems.iter_mut() {

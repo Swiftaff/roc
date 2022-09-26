@@ -45,9 +45,9 @@ pub enum Ident<'a> {
     },
     /// .foo { foo: 42 }
     AccessorFunction(&'a str),
-    /// .Foo or foo. or something like foo.Bar
     /// &foo { foo: 42 } 24
     UpdaterFunction(&'a str),
+    /// .Foo or foo. or something like foo.Bar
     Malformed(&'a str, BadIdent),
 }
 

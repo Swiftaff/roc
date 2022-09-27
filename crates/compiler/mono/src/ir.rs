@@ -4728,8 +4728,8 @@ pub fn with_hole<'a>(
             }
         }
 
-        Updater(accessor_data) => {
-            let field_var = accessor_data.field_var;
+        Updater(updater_data) => {
+            let field_var = updater_data.field_var;
             let fresh_record_symbol = env.unique_symbol();
 
             let ClosureData {
@@ -4738,7 +4738,7 @@ pub fn with_hole<'a>(
                 arguments,
                 loc_body,
                 ..
-            } = accessor_data.to_closure_data(fresh_record_symbol);
+            } = updater_data.to_closure_data(fresh_record_symbol);
 
             match procs.insert_anonymous(
                 env,

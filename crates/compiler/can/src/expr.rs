@@ -397,8 +397,8 @@ impl AccessorData {
     }
 }
 
-/// A record updater like `&foo`, which is equivalent to `\r, v -> r`
-/// Accessors are desugared to closures; they need to have a name
+/// A record updater like `&foo`, which is equivalent to `\r, v -> {r & foo: v}`
+/// Updaters are desugared to closures; they need to have a name
 /// so the closure can have a correct lambda set.
 ///
 /// We distinguish them from closures so we can have better error messages
@@ -426,29 +426,49 @@ impl UpdaterData {
             field,
         } = self;
 
-        // IDEA: convert accessor from
+        // IDEA: convert updater from
         //
         // &foo
         //
         // into
         //
-        // (\r, v -> r)
-        // TODO unsure what to change here
-        let body = Expr::Access {
+        // (\r, v -> { r & foo: v })
+
+        //attempting to make a HashMap I guess?
+        let mut updates = SendMap::default();
+        let region = Region::new(
+            roc_region::all::Position::zero(),
+            roc_region::all::Position::zero(),
+        );
+        let field_value = Field {
+            var: field_var,
+            region,
+            loc_expr: Box::new(Loc::at_zero(Expr::Var(name))),
+        };
+
+        updates.insert(field.clone(), field_value);
+
+        let body = Expr::Update {
             record_var,
             ext_var,
-            field_var,
-            loc_expr: Box::new(Loc::at_zero(Expr::Var(record_symbol))),
-            field,
+            symbol: record_symbol,
+            updates,
         };
 
         let loc_body = Loc::at_zero(body);
 
-        let arguments = vec![(
-            record_var,
-            AnnotatedMark::known_exhaustive(),
-            Loc::at_zero(Pattern::Identifier(record_symbol)),
-        )];
+        let arguments = vec![
+            (
+                record_var,
+                AnnotatedMark::known_exhaustive(),
+                Loc::at_zero(Pattern::Identifier(record_symbol)),
+            ),
+            (
+                ext_var,
+                AnnotatedMark::known_exhaustive(),
+                Loc::at_zero(Pattern::Identifier(record_symbol)),
+            ),
+        ];
 
         ClosureData {
             function_type: function_var,

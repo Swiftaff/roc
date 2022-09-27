@@ -992,7 +992,7 @@ pub fn canonicalize_expr<'a>(
             }),
             Output::default(),
         ),
-        ast::Expr::UpdaterFunction(field) => (
+        ast::Expr::UpdaterFunction(field, todo) => (
             Updater(UpdaterData {
                 name: scope.gen_unique_symbol(),
                 function_var: var_store.fresh(),

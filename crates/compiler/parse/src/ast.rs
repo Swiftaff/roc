@@ -168,7 +168,7 @@ pub enum Expr<'a> {
     /// e.g. `.foo`
     AccessorFunction(&'a str),
     /// e.g. `&foo`
-    UpdaterFunction(&'a str),
+    UpdaterFunction(&'a str, &'a str),
     /// eg 'b'
     SingleQuote(&'a str),
 
@@ -717,7 +717,7 @@ impl<'a> Pattern<'a> {
                 }
             }
             Ident::AccessorFunction(string) => Pattern::Malformed(string),
-            Ident::UpdaterFunction(string) => Pattern::Malformed(string),
+            Ident::UpdaterFunction(string, todo) => Pattern::Malformed(string),
             Ident::Malformed(string, _problem) => Pattern::Malformed(string),
         }
     }

@@ -311,7 +311,7 @@ fn loc_ident_pattern_help<'a>(
                 },
                 state,
             )),
-            Ident::UpdaterFunction(string) => Ok((
+            Ident::UpdaterFunction(string, todo) => Ok((
                 MadeProgress,
                 Loc {
                     region: loc_ident.region,

@@ -46,7 +46,7 @@ pub enum Ident<'a> {
     /// .foo { foo: 42 }
     AccessorFunction(&'a str),
     /// &foo { foo: 42 } 24
-    UpdaterFunction(&'a str),
+    UpdaterFunction(&'a str, &'a str),
     /// .Foo or foo. or something like foo.Bar
     Malformed(&'a str, BadIdent),
 }
@@ -72,7 +72,7 @@ impl<'a> Ident<'a> {
                 len - 1
             }
             AccessorFunction(string) => string.len(),
-            UpdaterFunction(string) => string.len(),
+            UpdaterFunction(string, todo) => string.len(),
             Malformed(string, _) => string.len(),
         }
     }
@@ -364,7 +364,10 @@ fn chomp_identifier_chain<'a>(
                 Ok(updater) => {
                     let bytes_parsed = 1 + updater.len();
 
-                    return Ok((bytes_parsed as u32, Ident::UpdaterFunction(updater)));
+                    return Ok((
+                        bytes_parsed as u32,
+                        Ident::UpdaterFunction(updater, updater),
+                    ));
                 }
                 Err(fail) => return Err((1, fail)),
             },

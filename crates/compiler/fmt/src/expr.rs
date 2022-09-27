@@ -36,7 +36,7 @@ impl<'a> Formattable for Expr<'a> {
             | SingleQuote(_)
             | Access(_, _)
             | AccessorFunction(_)
-            | UpdaterFunction(_)
+            | UpdaterFunction(_, _)
             | Var { .. }
             | Underscore { .. }
             | MalformedIdent(_, _)
@@ -392,10 +392,11 @@ impl<'a> Formattable for Expr<'a> {
                 buf.push('.');
                 buf.push_str(key);
             }
-            UpdaterFunction(key) => {
+            UpdaterFunction(key, todo) => {
                 buf.indent(indent);
                 buf.push('&');
                 buf.push_str(key);
+                buf.push_str(todo);
             }
             Access(expr, key) => {
                 expr.format_with_options(buf, Parens::InApply, Newlines::Yes, indent);

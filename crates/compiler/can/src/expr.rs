@@ -397,8 +397,8 @@ impl AccessorData {
     }
 }
 
-/// A record updater like `&foo`, which is equivalent to `\r, v -> r`
-/// Accessors are desugared to closures; they need to have a name
+/// A record updater like `&foo`, which is equivalent to `\r, v -> {r & foo: v}`
+/// Updaters are desugared to closures; they need to have a name
 /// so the closure can have a correct lambda set.
 ///
 /// We distinguish them from closures so we can have better error messages

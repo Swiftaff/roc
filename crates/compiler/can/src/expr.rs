@@ -426,15 +426,13 @@ impl UpdaterData {
             field,
         } = self;
 
-        // IDEA: convert accessor from
+        // IDEA: convert updater from
         //
         // &foo
         //
         // into
         //
-        // (\r, v -> r)
-        // TODO unsure what to change here
-        let body = Expr::Access {
+        // (\r, v -> { r & foo: v })
             record_var,
             ext_var,
             field_var,
